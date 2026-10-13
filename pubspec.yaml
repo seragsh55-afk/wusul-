@@ -1,8 +1,0 @@
-name: wusul_app
-dependencies:
-  flutter: {sdk: flutter}
-  sqflite: ^2.3.2
-  qr_flutter: ^4.1.0
-  supabase_flutter: ^2.5.6
-  connectivity_plus: ^6.0.3
-  geolocator: ^10.1.0
