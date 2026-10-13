@@ -2,32 +2,112 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>وصول - نظام توزيع الإغاثة</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>وصول - نظام إدارة الإغاثة | كرري - أم درمان</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
+<style>body{font-family:'Tajawal',sans-serif}</style>
 </head>
-<body class="bg-gray-100">
-<div class="min-h-screen flex items-center justify-center p-4">
-<div class="bg-white max-w-2xl w-full rounded-2xl shadow-xl p-8 text-center">
-<h1 class="text-4xl font-bold text-green-800 mb-4">🌿 وصول - WUSUL</h1>
-<p class="text-gray-600 mb-2">نظام إدارة وتوزيع الإغاثة - السودان</p>
-<div class="bg-green-50 p-4 rounded-xl my-6 text-right">
-<h3 class="font-bold mb-2">✅ الموقع يعمل بنجاح!</h3>
-<p>📍 أم درمان - كرري</p>
-<p>🔗 مربوط مع Supabase</p>
-<p>📱 تطبيق الأندرويد جاهز (Offline)</p>
-</div>
-<div class="grid grid-cols-2 gap-4">
-<div class="bg-blue-50 p-4 rounded-xl"><div class="text-2xl font-bold" id="families">0</div><div>أسرة مسجلة</div></div>
-<div class="bg-orange-50 p-4 rounded-xl"><div class="text-2xl font-bold">100%</div><div>يعمل Offline</div></div>
-</div>
-<p class="mt-6 text-sm text-gray-400">تم التطوير بواسطة سراج - مشروع تخرج IT 2026</p>
-<a href="https://github.com/seragsh55-afk/wusul" class="mt-4 inline-block bg-gray-800 text-white px-6 py-2 rounded-full">عرض الكود على GitHub</a>
+<body class="bg-[#f5f7f2]">
+
+<!-- Header -->
+<header class="bg-white shadow-sm sticky top-0 z-50">
+<div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-[#1B5E20] rounded-xl flex items-center justify-center text-white font-black text-xl">و</div>
+<div>
+<h1 class="font-black text-[#1B5E20] text-xl leading-none">وصول - WUSUL</h1>
+<p class="text-xs text-gray-500">محلية كرري - أم درمان | مشروع تخرج IT 2026</p>
 </div>
 </div>
+<div class="flex gap-2">
+<button onclick="exportExcel()" class="bg-gray-900 text-white px-4 py-2 rounded-full text-sm">📥 تصدير Excel</button>
+<span class="bg-green-100 text-green-700 px-3 py-2 rounded-full text-xs font-bold">● Live</span>
+</div>
+</div>
+</header>
+
+<main class="max-w-7xl mx-auto p-4 space-y-4">
+<!-- Stats -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<div class="bg-white p-5 rounded-2xl shadow-sm border"><p class="text-gray-500 text-sm">إجمالي الأسر</p><h2 id="totalFamilies" class="text-3xl font-black">0</h2><p class="text-xs text-green-600 mt-1">+ من التطبيق مباشرة</p></div>
+<div class="bg-white p-5 rounded-2xl shadow-sm border"><p class="text-gray-500 text-sm">تم التوزيع</p><h2 id="distributed" class="text-3xl font-black text-green-700">0</h2><p class="text-xs text-gray-400 mt-1">سلة غذائية</p></div>
+<div class="bg-white p-5 rounded-2xl shadow-sm border"><p class="text-gray-500 text-sm">قيد الانتظار</p><h2 id="pending" class="text-3xl font-black text-orange-500">0</h2><p class="text-xs text-gray-400 mt-1">تحتاج متابعة</p></div>
+<div class="bg-[#1B5E20] p-5 rounded-2xl shadow-sm text-white"><p class="text-green-100 text-sm">حالة النظام</p><h2 class="text-xl font-black">يعمل Offline</h2><p class="text-xs text-green-200 mt-1">مربوط مع Supabase</p></div>
+</div>
+
+<div class="grid md:grid-cols-3 gap-4">
+<!-- Map -->
+<div class="md:col-span-2 bg-white rounded-2xl shadow-sm border p-4">
+<div class="flex justify-between mb-3"><h3 class="font-bold">🗺️ خريطة التوزيع - كرري</h3><span class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full">15.6°N, 32.4°E</span></div>
+<div id="map" class="w-full h-[380px] rounded-xl z-0"></div>
+</div>
+<!-- Side List -->
+<div class="bg-white rounded-2xl shadow-sm border p-4">
+<h3 class="font-bold mb-3">📍 آخر التسجيلات</h3>
+<div id="recentList" class="space-y-2 max-h-[380px] overflow-auto text-sm"><p class="text-gray-400 text-center py-10">جاري تحميل البيانات...</p></div>
+</div>
+</div>
+
+<!-- Table -->
+<div class="bg-white rounded-2xl shadow-sm border p-4">
+<div class="flex flex-col md:flex-row justify-between gap-3 mb-4">
+<h3 class="font-bold">📋 سجل الأسر المسجلة</h3>
+<input id="search" onkeyup="filterTable()" placeholder="بحث بالاسم أو الرقم أو الحي..." class="border rounded-full px-4 py-2 text-sm w-full md:w-80">
+</div>
+<div class="overflow-auto">
+<table class="w-full text-sm">
+<thead class="bg-gray-50 text-gray-500"><tr><th class="p-3 text-right">الاسم</th><th class="p-3">رقم</th><th class="p-3">الحي</th><th class="p-3">أفراد</th><th class="p-3">الحالة</th></tr></thead>
+<tbody id="familyTable"><tr><td colspan="5" class="p-6 text-center text-gray-400">لا توجد بيانات بعد - سجل من تطبيق الأندرويد</td></tr></tbody>
+</table>
+</div>
+</div>
+
+<footer class="text-center text-xs text-gray-400 py-6">تم التطوير بواسطة سراج - علوم الحاسوب - السودان 2026 | seragsh55-afk.github.io/wusul-/</footer>
+</main>
+
 <script>
-// لما تربط Supabase حتظهر البيانات هنا تلقائيا
-console.log("Wusul Live!");
+// ==== ضع بيانات Supabase هنا ====
+const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
+const SUPABASE_KEY = "YOUR_ANON_KEY";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// خريطة أم درمان - كرري
+const map = L.map('map').setView([15.644, 32.483], 12);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+L.marker([15.644, 32.483]).addTo(map).bindPopup("محلية كرري - مركز التوزيع");
+
+async function loadData(){
+ try{
+  const { data, error } = await supabaseClient.from('families').select('*').order('created_at',{ascending:false}).limit(100);
+  if(error) throw error;
+  if(!data || data.length==0){ document.getElementById('recentList').innerHTML='<p class="text-center text-gray-400 py-10">لم يتم التسجيل بعد.<br>افتح تطبيق وصول وسجل أسرة.</p>'; return; }
+
+  document.getElementById('totalFamilies').innerText = data.length;
+  document.getElementById('distributed').innerText = data.filter(f=>f.status=='distributed').length;
+  document.getElementById('pending').innerText = data.filter(f=>f.status!='distributed').length;
+
+  document.getElementById('familyTable').innerHTML = data.map(f=>`
+    <tr class="border-t hover:bg-gray-50"><td class="p-3 font-bold">${f.name||'-'}</td><td class="p-3">${f.phone||'-'}</td><td class="p-3">${f.district||'كرري'}</td><td class="p-3 text-center">${f.members||0}</td><td class="p-3"><span class="px-2 py-1 rounded-full text-xs ${f.status=='distributed'?'bg-green-100 text-green-700':'bg-orange-100 text-orange-600'}">${f.status=='distributed'?'تم':'انتظار'}</span></td></tr>
+  `).join('');
+
+  document.getElementById('recentList').innerHTML = data.slice(0,8).map(f=>`
+    <div class="p-3 bg-gray-50 rounded-xl flex justify-between"><div><div class="font-bold">${f.name}</div><div class="text-xs text-gray-500">${f.district} - ${f.members} أفراد</div></div><div class="text-xs">${new Date(f.created_at).toLocaleDateString('ar-SD')}</div></div>
+  `).join('');
+
+  data.forEach(f=>{ if(f.lat && f.lng) L.marker([f.lat,f.lng]).addTo(map).bindPopup(`${f.name} - ${f.district}`); });
+
+ }catch(e){
+  console.log(e);
+  document.getElementById('recentList').innerHTML = `<p class="text-center text-red-400 py-10">Supabase غير مربوط بعد.<br><span class="text-xs text-gray-500">ضع الـ URL والـ KEY في الكود</span></p>`;
+ }
+}
+function filterTable(){ const q=document.getElementById('search').value.toLowerCase(); document.querySelectorAll('#familyTable tr').forEach(r=>{ r.style.display=r.innerText.toLowerCase().includes(q)?'':'none'; }); }
+function exportExcel(){ const rows=document.getElementById('familyTable').innerText; if(!rows.trim()){alert('لا توجد بيانات للتصدير');return;} let csv="الاسم,رقم,الحي,الافراد,الحالة\n"+document.querySelectorAll('#familyTable tr').length; const blob=new Blob(["\uFEFF"+document.getElementById('familyTable').outerHTML],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='wusul-families.xls'; a.click(); }
+loadData();
 </script>
 </body>
 </html>
