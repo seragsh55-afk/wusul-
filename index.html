@@ -139,25 +139,15 @@ const SUPABASE_URL = "https://lnkxakptqqyrrqmfnpoe.supabase.co";
 const SUPABASE_KEY = "sb_publishable_eYODW4rFLkBWmCYxWA5aNA_FS5Munx1";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-function login(){ 
-  if((document.getElementById('user').value==='sirag' && document.getElementById('pass').value==='389100'){ 
-    localStorage.setItem('wusul_auth','1'); 
-    document.getElementById('loginScreen').classList.add('hidden'); 
-    document.getElementById('app').classList.remove('hidden'); 
-    initMap(); 
-    loadData(); 
-  } else { 
-    document.getElementById('loginError').classList.remove('hidden'); 
-  } 
-}
+function login(){ if(document.getElementById('user').value==='sirag' && document.getElementById('pass').value==='389100'){ localStorage.setItem('wusul_auth','1'); document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('app').classList.remove('hidden'); initMap(); loadData(); } else { document.getElementById('loginError').classList.remove('hidden'); } }
+  
 function logout(){ localStorage.removeItem('wusul_auth'); location.reload(); }
 if(localStorage.getItem('wusul_auth')){ document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('app').classList.remove('hidden'); }
 
 let map;
 function initMap(){ map = L.map('map').setView([15.9, 30.2], 5.5); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); }
 
-let allFamiliesData = [];
-
+  
 async function loadData(){
  try{
   const { data } = await supabaseClient.from('families').select('*').order('created_at',{ascending:false}).limit(200);
