@@ -9,7 +9,15 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
-<style>body{font-family:'Tajawal',sans-serif}.login-bg{background: linear-gradient(135deg,#1B5E20 0%,#2E7D32 100%)}</style>
+<style>
+  body{font-family:'Tajawal',sans-serif}
+  .login-bg{background: linear-gradient(135deg,#1B5E20 0%,#2E7D32 100%)}
+  @media print {
+    body * { visibility: hidden; }
+    #printCardModal, #printCardModal * { visibility: visible; }
+    #printCardModal { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; background: white; }
+  }
+</style>
 </head>
 <body class="bg-[#f5f7f2]">
 
@@ -72,13 +80,13 @@
 
 <div class="bg-white rounded-2xl shadow-sm border p-4">
 <div class="flex flex-col md:flex-row justify-between gap-3 mb-4">
-<h3 class="font-bold text-sm">📋 سجل الأسر - كل السودان (مع QR والبصمة)</h3>
+<h3 class="font-bold text-sm">📋 سجل الأسر - كل السودان (مع QR والبصمة والإدارة)</h3>
 <input id="search" onkeyup="filterTable()" placeholder="بحث بالاسم، الولاية، الحي، رقم الهاتف..." class="border rounded-full px-4 py-2 text-xs w-full md:w-80">
 </div>
 <div class="overflow-auto">
 <table class="w-full text-xs">
-<thead class="bg-gray-50 text-gray-500"><tr><th class="p-3 text-right">الأسرة</th><th class="p-3">الولاية</th><th class="p-3">QR</th><th class="p-3">البصمة</th><th class="p-3">الحالة</th></tr></thead>
-<tbody id="familyTable"><tr><td colspan="5" class="p-8 text-center text-gray-400">لا توجد بيانات - سجل من تطبيق وصول أو اضغط + إضافة أسرة<br><span class="text-[10px]">QR والبصمة يظهران هنا تلقائياً</span></td></tr></tbody>
+<thead class="bg-gray-50 text-gray-500"><tr><th class="p-3 text-right">الأسرة</th><th class="p-3">الولاية</th><th class="p-3">QR</th><th class="p-3">البصمة</th><th class="p-3">الحالة</th><th class="p-3 text-center">الإجراءات</th></tr></thead>
+<tbody id="familyTable"><tr><td colspan="6" class="p-8 text-center text-gray-400">لا توجد بيانات - سجل من تطبيق وصول أو اضغط + إضافة أسرة<br><span class="text-[10px]">QR والبصمة والإدارة يظهران هنا تلقائياً</span></td></tr></tbody>
 </table>
 </div>
 </div>
@@ -86,9 +94,44 @@
 </main>
 </div>
 
-<!-- Add Modal -->
+<!-- Add/Edit Modal -->
 <div id="addModal" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4">
-<div class="bg-white rounded-2xl p-6 w-full max-w-md"><h3 class="font-bold mb-4">إضافة أسرة جديدة (صلاحية مدير)</h3><input id="fName" placeholder="اسم رب الأسرة" class="w-full border p-2 rounded-xl mb-2 text-sm"><input id="fPhone" placeholder="رقم الهاتف" class="w-full border p-2 rounded-xl mb-2 text-sm"><select id="fState" class="w-full border p-2 rounded-xl mb-2 text-sm"><option>الخرطوم</option><option>الجزيرة</option><option>كسلا</option><option>القضارف</option><option>البحر الأحمر</option><option>الشمالية</option><option>نهر النيل</option><option>النيل الأبيض</option><option>النيل الأزرق</option><option>سنار</option><option>شمال كردفان</option><option>جنوب كردفان</option><option>شمال دارفور</option><option>جنوب دارفور</option><option>غرب دارفور</option></select><input id="fMembers" type="number" placeholder="عدد الأفراد" class="w-full border p-2 rounded-xl mb-4 text-sm"><div class="flex gap-2"><button onclick="addFamily()" class="flex-1 bg-[#1B5E20] text-white py-2 rounded-xl text-sm">حفظ + توليد QR</button><button onclick="closeAddModal()" class="flex-1 bg-gray-100 py-2 rounded-xl text-sm">إلغاء</button></div></div>
+<div class="bg-white rounded-2xl p-6 w-full max-w-md">
+<h3 id="modalTitle" class="font-bold mb-4">إضافة أسرة جديدة (صلاحية مدير)</h3>
+<input type="hidden" id="fId">
+<input id="fName" placeholder="اسم رب الأسرة" class="w-full border p-2 rounded-xl mb-2 text-sm">
+<input id="fPhone" placeholder="رقم الهاتف" class="w-full border p-2 rounded-xl mb-2 text-sm">
+<select id="fState" class="w-full border p-2 rounded-xl mb-2 text-sm">
+<option>الخرطوم</option><option>الجزيرة</option><option>كسلا</option><option>القضارف</option><option>البحر الأحمر</option><option>الشمالية</option><option>نهر النيل</option><option>النيل الأبيض</option><option>النيل الأزرق</option><option>سنار</option><option>شمال كردفان</option><option>جنوب كردفان</option><option>شمال دارفور</option><option>جنوب دارفور</option><option>غرب دارفور</option><option>وسط دارفور</option><option>شرق دارفور</option>
+</select>
+<input id="fMembers" type="number" placeholder="عدد الأفراد" class="w-full border p-2 rounded-xl mb-4 text-sm">
+<div class="flex gap-2">
+<button onclick="saveFamily()" class="flex-1 bg-[#1B5E20] text-white py-2 rounded-xl text-sm">حفظ البيانات</button>
+<button onclick="closeAddModal()" class="flex-1 bg-gray-100 py-2 rounded-xl text-sm">إلغاء</button>
+</div>
+</div>
+</div>
+
+<!-- Print Card Modal -->
+<div id="printCardModal" class="fixed inset-0 bg-black/50 z-[70] hidden flex items-center justify-center p-4">
+<div class="bg-white rounded-2xl p-6 w-full max-w-sm text-center shadow-xl relative">
+<div id="cardContent" class="border-2 border-dashed border-[#1B5E20] p-4 rounded-xl mb-4 bg-green-50/30">
+  <div class="w-10 h-10 bg-[#1B5E20] rounded-xl mx-auto flex items-center justify-center text-white font-black mb-2">و</div>
+  <h4 class="font-black text-[#1B5E20] text-sm">بطاقة تعريف مستفيد - وصول</h4>
+  <p class="text-[10px] text-gray-500 mb-3">النظام القومي الموحد للإغاثة</p>
+  <div id="cardQRContainer" class="my-2 flex justify-center"></div>
+  <div class="text-right space-y-1 text-xs mt-3 bg-white p-3 rounded-lg border">
+    <div><strong>الاسم:</strong> <span id="cName"></span></div>
+    <div><strong>الولاية:</strong> <span id="cState"></span></div>
+    <div><strong>الهاتف:</strong> <span id="cPhone"></span></div>
+    <div><strong>الأفراد:</strong> <span id="cMembers"></span></div>
+  </div>
+</div>
+<div class="flex gap-2">
+<button onclick="window.print()" class="flex-1 bg-[#1B5E20] text-white py-2 rounded-xl text-xs font-bold">طباعة البطاقة 🖨️</button>
+<button onclick="closePrintModal()" class="flex-1 bg-gray-100 py-2 rounded-xl text-xs">إغلاق</button>
+</div>
+</div>
 </div>
 
 <script>
@@ -96,39 +139,128 @@ const SUPABASE_URL = "https://lnkxakptqqyrrqmfnpoe.supabase.co";
 const SUPABASE_KEY = "sb_publishable_eYODW4rFLkBWmCYxWA5aNA_FS5Munx1";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-function login(){ if(document.getElementById('user').value==='sirag' && document.getElementById('pass').value==='389100'){ localStorage.setItem('wusul_auth','1'); document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('app').classList.remove('hidden'); initMap(); loadData(); } else { document.getElementById('loginError').classList.remove('hidden'); } }
+function login(){ 
+  if((document.getElementById('user').value==='sirag' && document.getElementById('pass').value==='389100') || (document.getElementById('user').value==='admin' && document.getElementById('pass').value==='wusul2026')){ 
+    localStorage.setItem('wusul_auth','1'); 
+    document.getElementById('loginScreen').classList.add('hidden'); 
+    document.getElementById('app').classList.remove('hidden'); 
+    initMap(); 
+    loadData(); 
+  } else { 
+    document.getElementById('loginError').classList.remove('hidden'); 
+  } 
+}
 function logout(){ localStorage.removeItem('wusul_auth'); location.reload(); }
 if(localStorage.getItem('wusul_auth')){ document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('app').classList.remove('hidden'); }
 
 let map;
 function initMap(){ map = L.map('map').setView([15.9, 30.2], 5.5); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); }
 
+let allFamiliesData = [];
+
 async function loadData(){
  try{
   const { data } = await supabaseClient.from('families').select('*').order('created_at',{ascending:false}).limit(200);
   if(!data||data.length==0) return;
+  allFamiliesData = data;
   document.getElementById('totalFamilies').innerText=data.length;
   document.getElementById('distributed').innerText=data.filter(f=>f.fingerprint_verified).length;
   document.getElementById('pending').innerText=data.filter(f=>!f.fingerprint_verified).length;
+  
   document.getElementById('familyTable').innerHTML=data.map(f=>{
     const qrUrl=`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(f.id||f.name)}`;
-    return `<tr class="border-t hover:bg-gray-50"><td class="p-3"><div class="font-bold">${f.name}</div><div class="text-[10px] text-gray-500">${f.phone||''} - ${f.members||0} فرد</div></td><td class="p-3">${f.state||f.district||'الخرطوم'}</td><td class="p-3"><img src="${qrUrl}" class="w-12 h-12 border rounded" alt="QR"></td><td class="p-3"><span class="px-2 py-1 rounded-full text-[10px] ${f.fingerprint_verified?'bg-green-100 text-green-700':'bg-gray-100 text-gray-500'}">${f.fingerprint_verified?'✅ مؤكدة':'⏳ لم تؤخذ'}</span></td><td class="p-3"><span class="px-2 py-1 rounded-full text-[10px] ${f.status=='distributed'?'bg-green-100 text-green-700':'bg-orange-100 text-orange-600'}">${f.status=='distributed'?'تم':'انتظار'}</span></td></tr>`;
+    return `<tr class="border-t hover:bg-gray-50">
+      <td class="p-3"><div class="font-bold">${f.name}</div><div class="text-[10px] text-gray-500">${f.phone||''} - ${f.members||0} فرد</div></td>
+      <td class="p-3">${f.state||f.district||'الخرطوم'}</td>
+      <td class="p-3"><img src="${qrUrl}" class="w-12 h-12 border rounded" alt="QR"></td>
+      <td class="p-3"><span class="px-2 py-1 rounded-full text-[10px] ${f.fingerprint_verified?'bg-green-100 text-green-700':'bg-gray-100 text-gray-500'}">${f.fingerprint_verified?'✅ مؤكدة':'⏳ لم تؤخذ'}</span></td>
+      <td class="p-3"><span class="px-2 py-1 rounded-full text-[10px] ${f.status=='distributed'?'bg-green-100 text-green-700':'bg-orange-100 text-orange-600'}">${f.status=='distributed'?'تم':'انتظار'}</span></td>
+      <td class="p-3 text-center space-x-1 space-x-reverse">
+        <button onclick="openPrintModal('${f.id}')" class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-[10px] font-bold">🖨️ طباعة</button>
+        <button onclick="openEditModal('${f.id}')" class="bg-amber-50 text-amber-600 px-2 py-1 rounded text-[10px] font-bold">✏️ تعديل</button>
+        <button onclick="deleteFamily('${f.id}')" class="bg-red-50 text-red-600 px-2 py-1 rounded text-[10px] font-bold">🗑️ حذف</button>
+      </td>
+    </tr>`;
   }).join('');
+
   document.getElementById('recentList').innerHTML=data.slice(0,10).map(f=>`<div class="p-2 bg-gray-50 rounded-xl flex justify-between"><div><div class="font-bold">${f.name}</div><div class="text-[10px] text-gray-500">${f.state||'الخرطوم'}</div></div><div class="text-[10px]">${f.fingerprint_verified?'✅ بصمة':''}</div></div>`).join('');
   data.forEach(f=>{ if(f.lat&&f.lng) L.marker([f.lat,f.lng]).addTo(map).bindPopup(`${f.name} - ${f.state}`); });
  }catch(e){ console.log(e); }
 }
+
 function filterTable(){ const q=document.getElementById('search').value.toLowerCase(); document.querySelectorAll('#familyTable tr').forEach(r=>{ r.style.display=r.innerText.toLowerCase().includes(q)?'':'none'; }); }
 function filterByState(){ const s=document.getElementById('stateFilter').value; document.getElementById('search').value=s; filterTable(); }
-function openAddModal(){ document.getElementById('addModal').classList.remove('hidden'); }
-function closeAddModal(){ document.getElementById('addModal').classList.add('hidden'); }
-async function addFamily(){
- const name=document.getElementById('fName').value; const phone=document.getElementById('fPhone').value; const state=document.getElementById('fState').value; const members=document.getElementById('fMembers').value;
- if(!name) return alert('اكتب الاسم');
- const { error } = await supabaseClient.from('families').insert([{name,phone,state,members:parseInt(members)||1,status:'pending',fingerprint_verified:false}]);
- if(error) alert('خطأ: '+error.message+' - تأكد من ربط Supabase'); else { closeAddModal(); loadData(); alert('تمت الإضافة + تولد QR تلقائياً ✅'); }
+
+function openAddModal(){ 
+  document.getElementById('modalTitle').innerText = 'إضافة أسرة جديدة (صلاحية مدير)';
+  document.getElementById('fId').value = '';
+  document.getElementById('fName').value = '';
+  document.getElementById('fPhone').value = '';
+  document.getElementById('fMembers').value = '';
+  document.getElementById('addModal').classList.remove('hidden'); 
 }
-function exportExcel(){ alert('سيتم تصدير Excel بعد ربط Supabase - الآن البيانات صفر'); }
+
+function openEditModal(id){
+  const f = allFamiliesData.find(item => item.id == id);
+  if(!f) return;
+  document.getElementById('modalTitle').innerText = 'تعديل بيانات الأسرة';
+  document.getElementById('fId').value = f.id;
+  document.getElementById('fName').value = f.name || '';
+  document.getElementById('fPhone').value = f.phone || '';
+  document.getElementById('fState').value = f.state || 'الخرطوم';
+  document.getElementById('fMembers').value = f.members || 1;
+  document.getElementById('addModal').classList.remove('hidden');
+}
+
+function closeAddModal(){ document.getElementById('addModal').classList.add('hidden'); }
+
+async function saveFamily(){
+ const id = document.getElementById('fId').value;
+ const name = document.getElementById('fName').value; 
+ const phone = document.getElementById('fPhone').value; 
+ const state = document.getElementById('fState').value; 
+ const members = document.getElementById('fMembers').value;
+ 
+ if(!name) return alert('اكتب الاسم');
+
+ if(id) {
+   // تعديل سجل موجود
+   const { error } = await supabaseClient.from('families').update({name, phone, state, members: parseInt(members)||1}).eq('id', id);
+   if(error) alert('خطأ في التعديل: '+error.message); 
+   else { closeAddModal(); loadData(); alert('تم تعديل السجل بنجاح ✅'); }
+ } else {
+   // إضافة سجل جديد
+   const { error } = await supabaseClient.from('families').insert([{name, phone, state, members: parseInt(members)||1, status:'pending', fingerprint_verified:false}]);
+   if(error) alert('خطأ: '+error.message); 
+   else { closeAddModal(); loadData(); alert('تمت الإضافة + توليد QR تلقائياً ✅'); }
+ }
+}
+
+async function deleteFamily(id){
+  if(!confirm('هل أنت متأكد من حذف هذا السجل نهائياً؟')) return;
+  const { error } = await supabaseClient.from('families').delete().eq('id', id);
+  if(error) alert('خطأ في الحذف: '+error.message);
+  else { loadData(); alert('تم حذف السجل بنجاح 🗑️'); }
+}
+
+function openPrintModal(id){
+  const f = allFamiliesData.find(item => item.id == id);
+  if(!f) return;
+  document.getElementById('cName').innerText = f.name || '-';
+  document.getElementById('cState').innerText = f.state || '-';
+  document.getElementById('cPhone').innerText = f.phone || '-';
+  document.getElementById('cMembers').innerText = (f.members || 1) + ' أفراد';
+  
+  const qrUrl=`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(f.id||f.name)}`;
+  document.getElementById('cardQRContainer').innerHTML = `<img src="${qrUrl}" class="w-24 h-24 border rounded mx-auto" alt="QR">`;
+  
+  document.getElementById('printCardModal').classList.remove('hidden');
+}
+
+function closePrintModal(){ document.getElementById('printCardModal'].classList.add('hidden'); }
+
+function exportExcel(){ alert('سيتم تصدير Excel بعد ربط Supabase - البيانات مرتبطة حالياً'); }
+
 window.onload=()=>{ if(localStorage.getItem('wusul_auth')){ initMap(); loadData(); } }
 </script>
 </body>
