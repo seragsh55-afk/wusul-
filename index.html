@@ -140,7 +140,7 @@ const SUPABASE_KEY = "sb_publishable_eYODW4rFLkBWmCYxWA5aNA_FS5Munx1";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 function login(){ 
-  if((document.getElementById('user').value==='sirag' && document.getElementById('pass').value==='389100') || (document.getElementById('user').value==='admin' && document.getElementById('pass').value==='wusul2026')){ 
+  if((document.getElementById('user').value==='sirag' && document.getElementById('pass').value==='389100'){ 
     localStorage.setItem('wusul_auth','1'); 
     document.getElementById('loginScreen').classList.add('hidden'); 
     document.getElementById('app').classList.remove('hidden'); 
