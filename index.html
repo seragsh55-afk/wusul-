@@ -28,13 +28,13 @@
 <div class="w-16 h-16 bg-[#1B5E20] rounded-2xl mx-auto flex items-center justify-center text-white font-black text-2xl mb-3">و</div>
 <h1 class="font-black text-2xl text-[#1B5E20]">وصول - WUSUL</h1>
 <p class="text-sm text-gray-500">النظام القومي الموحد للإغاثة - السودان</p>
-<p class="text-xs text-gray-400 mt-2">لوحة تحكم المدير العام - دخول محمي</p>
+<p id="loginSub" class="text-xs text-gray-400 mt-2">لوحة تحكم المدير العام - دخول محمي</p>
 </div>
 <input id="user" placeholder="اسم المستخدم" value="admin" class="w-full border p-3 rounded-xl mb-3 text-sm">
 <input id="pass" type="password" placeholder="كلمة السر" value="wusul2026" class="w-full border p-3 rounded-xl mb-4 text-sm">
 <button onclick="login()" class="w-full bg-[#1B5E20] text-white py-3 rounded-xl font-bold">دخول آمن 🔐</button>
 <p id="loginError" class="text-red-500 text-xs text-center mt-3 font-bold hidden">❌ اسم المستخدم أو كلمة السر غير صحيحة، يرجى المحاولة مرة أخرى.</p>
-<p class="text-[10px] text-gray-400 text-center mt-4">مخصص لإدارة الإغاثة لكل السودانيين - 18 ولاية<br>تجريبي: admin / wusul2026</p>
+<p class="text-[10px] text-gray-400 text-center mt-4">مخصص لإدارة الإغاثة لكل السودانيين - 18 ولاية<br>المدير: admin / wusul2026 - الأدمن: ببياناته من صفحة إدارة الأدمن</p>
 </div>
 </div>
 
@@ -47,11 +47,14 @@
 <div>
 <h1 class="font-black text-[#1B5E20] text-lg leading-none">وصول - لكل السودان</h1>
 <p class="text-[11px] text-gray-500">النظام القومي - 18 ولاية - مشروع تخرج 2026</p>
+<p id="whoami" class="text-[11px] font-bold text-green-700"></p>
 </div>
 </div>
-<div class="flex gap-2 items-center">
-<button onclick="openAddModal()" class="bg-[#1B5E20] text-white px-4 py-2 rounded-full text-xs font-bold">+ إضافة أسرة</button>
+<div class="flex gap-2 items-center flex-wrap">
+<button id="btnAddFamily" onclick="openAddModal()" class="bg-[#1B5E20] text-white px-4 py-2 rounded-full text-xs font-bold">+ إضافة أسرة</button>
 <button onclick="exportExcel()" class="bg-gray-900 text-white px-4 py-2 rounded-full text-xs">📥 Excel</button>
+<!-- ✅ زر إدارة الأدمن - يظهر للمدير فقط -->
+<button id="btnAdmins" onclick="openAdminsModal()" class="bg-amber-500 text-white px-4 py-2 rounded-full text-xs font-bold hidden">👥 إدارة الأدمن</button>
 <button onclick="logout()" class="text-xs text-red-500 border px-3 py-2 rounded-full">خروج</button>
 </div>
 </div>
@@ -81,7 +84,6 @@
 <div class="bg-white rounded-2xl shadow-sm border p-4">
 <div class="flex flex-col md:flex-row justify-between gap-3 mb-4">
 <h3 class="font-bold text-sm">📋 سجل الأسر - كل السودان (مع QR والبصمة والإدارة)</h3>
-<!-- ✅ إضافة فقط: فلتر التصنيف بنفس ستايل البحث -->
 <div class="flex gap-2 w-full md:w-auto">
 <select id="classFilter" onchange="filterTable()" class="border rounded-full px-4 py-2 text-xs w-full md:w-44"><option value="">كل التصنيفات</option><option>اليتيمة</option><option>الضعيفة</option><option>المتوسطة</option><option>الميسورة</option><option>المفرد</option></select>
 <input id="search" onkeyup="filterTable()" placeholder="بحث بالاسم، الولاية، الحي، رقم الهاتف..." class="border rounded-full px-4 py-2 text-xs w-full md:w-80">
@@ -89,7 +91,6 @@
 </div>
 <div class="overflow-auto">
 <table class="w-full text-xs">
-<!-- ✅ إضافة فقط: عمود التصنيف -->
 <thead class="bg-gray-50 text-gray-500"><tr><th class="p-3 text-right">الأسرة</th><th class="p-3">الولاية</th><th class="p-3">التصنيف</th><th class="p-3">QR</th><th class="p-3">البصمة</th><th class="p-3">الحالة</th><th class="p-3 text-center">الإجراءات</th></tr></thead>
 <tbody id="familyTable"><tr><td colspan="7" class="p-8 text-center text-gray-400">لا توجد بيانات - سجل من تطبيق وصول أو اضغط + إضافة أسرة<br><span class="text-[10px]">QR والبصمة والإدارة يظهران هنا تلقائياً</span></td></tr></tbody>
 </table>
@@ -99,7 +100,7 @@
 </main>
 </div>
 
-<!-- Add/Edit Modal -->
+<!-- Add/Edit Family Modal - نفس الأول -->
 <div id="addModal" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4">
 <div class="bg-white rounded-2xl p-6 w-full max-w-md">
 <h3 id="modalTitle" class="font-bold mb-4">إضافة أسرة جديدة (صلاحية مدير)</h3>
@@ -110,17 +111,43 @@
 <option>الخرطوم</option><option>الجزيرة</option><option>كسلا</option><option>القضارف</option><option>البحر الأحمر</option><option>الشمالية</option><option>نهر النيل</option><option>النيل الأبيض</option><option>النيل الأزرق</option><option>سنار</option><option>شمال كردفان</option><option>جنوب كردفان</option><option>شمال دارفور</option><option>جنوب دارفور</option><option>غرب دارفور</option><option>وسط دارفور</option><option>شرق دارفور</option>
 </select>
 <input id="fMembers" type="number" placeholder="عدد الأفراد" class="w-full border p-2 rounded-xl mb-2 text-sm">
-<!-- ✅ إضافة فقط: حقل التصنيف -->
 <select id="fClass" class="w-full border p-2 rounded-xl mb-2 text-sm">
 <option>اليتيمة</option><option>الضعيفة</option><option>المتوسطة</option><option>الميسورة</option><option>المفرد</option>
 </select>
-<!-- ✅ إضافة فقط: زر البصمة -->
 <button id="fingerBtn" onclick="captureFingerprint()" type="button" class="w-full border p-2 rounded-xl mb-1 text-sm font-bold text-gray-600">👆 اضغط لالتقاط البصمة</button>
 <p id="fingerStatus" class="text-[11px] text-center mb-4 text-gray-400">لم يتم التقاط البصمة بعد</p>
 <div class="flex gap-2">
 <button onclick="saveFamily()" class="flex-1 bg-[#1B5E20] text-white py-2 rounded-xl text-sm">حفظ البيانات</button>
 <button onclick="closeAddModal()" class="flex-1 bg-gray-100 py-2 rounded-xl text-sm">إلغاء</button>
 </div>
+</div>
+</div>
+
+<!-- ✅ صفحة إدارة الأدمن - نفس ستايل وصول -->
+<div id="adminsModal" class="fixed inset-0 bg-black/50 z-[65] hidden flex items-center justify-center p-4">
+<div class="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-auto">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-black text-lg">👥 إدارة الأدمن - المدير فقط</h3>
+<button onclick="closeAdminsModal()" class="bg-gray-100 px-3 py-1 rounded-full text-sm">✕</button>
+</div>
+
+<div class="bg-green-50 border border-green-100 rounded-xl p-4 mb-4">
+<h4 class="font-bold text-sm mb-3">+ إضافة أدمن جديد</h4>
+<input id="aName" placeholder="الاسم الكامل" class="w-full border p-2 rounded-xl mb-2 text-sm">
+<input id="aPhone" placeholder="رقم الهاتف" class="w-full border p-2 rounded-xl mb-2 text-sm">
+<input id="aUsername" placeholder="اسم المستخدم للدخول - مثال: ahmed1" class="w-full border p-2 rounded-xl mb-2 text-sm">
+<input id="aPassword" placeholder="كلمة السر" class="w-full border p-2 rounded-xl mb-2 text-sm">
+<label class="text-xs font-bold text-gray-500 block mb-1">الصلاحية</label>
+<select id="aRole" class="w-full border p-2 rounded-xl mb-3 text-sm">
+<option value="view_only">👁️ عرض وبحث فقط - يشوف ويبحث بس</option>
+<option value="add_search">➕ إضافة وبحث - يضيف أسر جديدة ويبحث</option>
+</select>
+<button onclick="saveAdmin()" class="w-full bg-[#1B5E20] text-white py-2 rounded-xl text-sm font-bold">حفظ الأدمن</button>
+<p class="text-[11px] text-gray-400 text-center mt-2">الأدمن بيدخل من نفس صفحة الدخول الرئيسية باسمو وكلمة سرو</p>
+</div>
+
+<h4 class="font-bold text-sm mb-2">قائمة الأدمن الحاليين</h4>
+<div id="adminsList" class="space-y-2 text-sm"><p class="text-gray-400 text-center py-4 text-xs">جاري التحميل...</p></div>
 </div>
 </div>
 
@@ -152,30 +179,62 @@ const SUPABASE_URL = "https://lnkxakptqqyrrqmfnpoe.supabase.co";
 const SUPABASE_KEY = "sb_publishable_eYODW4rFLkBWmCYxWA5aNA_FS5Munx1";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let tempFingerprint = false;
+let currentUser = null; // {type:'manager'|'admin', name, role}
+let allFamiliesData = [];
 
-function login(){ 
+// ✅ تطبيق الصلاحيات على الواجهة
+function applyPermissions(){
+  if(!currentUser) return;
+  const isManager = currentUser.type === 'manager';
+  const isViewOnly = currentUser.role === 'view_only';
+  const isAddSearch = currentUser.role === 'add_search';
+  document.getElementById('btnAdmins').classList.toggle('hidden', !isManager);
+  // عرض فقط: اخفي زر الإضافة
+  document.getElementById('btnAddFamily').style.display = (isManager || isAddSearch) ? '' : 'none';
+  document.getElementById('whoami').innerText = isManager ? '👑 مدخل كمدير عام - صلاحية كاملة' : (isViewOnly ? '👁️ مدخل كأدمن - عرض وبحث فقط' : '➕ مدخل كأدمن - إضافة وبحث');
+  document.getElementById('loginSub').innerText = isManager ? 'لوحة تحكم المدير العام' : 'لوحة الأدمن - ' + (isViewOnly ? 'عرض وبحث فقط' : 'إضافة وبحث');
+  // بعد رسم الجدول، الأزرار حتتظبط في loadData
+}
+
+async function login(){ 
   const u = document.getElementById('user').value.trim();
   const p = document.getElementById('pass').value.trim();
   const errEl = document.getElementById('loginError');
+  // 1) المدير - نفس الأول
   if((u === 'admin' && p === 'wusul2026') || (u === 'sirag' && p === '389100')){ 
+    currentUser = {type:'manager', name: u, role:'manager'};
+    localStorage.setItem('wusul_auth','1');
+    localStorage.setItem('wusul_user', JSON.stringify(currentUser));
     errEl.classList.add('hidden');
-    localStorage.setItem('wusul_auth','1'); 
     document.getElementById('loginScreen').classList.add('hidden'); 
     document.getElementById('app').classList.remove('hidden'); 
-    initMap(); 
-    loadData(); 
-  } else { 
-    errEl.classList.remove('hidden'); 
-  } 
+    applyPermissions(); initMap(); loadData(); return;
+  }
+  // 2) الأدمن من جدول admins
+  try{
+    const { data, error } = await supabaseClient.from('admins').select('*').eq('username', u).eq('password', p).maybeSingle();
+    if(error) throw error;
+    if(data){
+      currentUser = {type:'admin', name: data.name || u, role: data.role || 'view_only'};
+      localStorage.setItem('wusul_auth','1');
+      localStorage.setItem('wusul_user', JSON.stringify(currentUser));
+      errEl.classList.add('hidden');
+      document.getElementById('loginScreen').classList.add('hidden'); 
+      document.getElementById('app').classList.remove('hidden'); 
+      applyPermissions(); initMap(); loadData(); return;
+    }
+  }catch(e){ console.log('admin login error', e); }
+  errEl.classList.remove('hidden');
 }
 
-function logout(){ localStorage.removeItem('wusul_auth'); location.reload(); }
-if(localStorage.getItem('wusul_auth')){ document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('app').classList.remove('hidden'); }
+function logout(){ localStorage.removeItem('wusul_auth'); localStorage.removeItem('wusul_user'); location.reload(); }
+if(localStorage.getItem('wusul_auth')){
+  try{ currentUser = JSON.parse(localStorage.getItem('wusul_user')||'null') || {type:'manager', name:'admin', role:'manager'}; }catch(e){ currentUser = {type:'manager', name:'admin', role:'manager'}; }
+  document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('app').classList.remove('hidden');
+}
 
 let map;
-function initMap(){ map = L.map('map').setView([15.9, 30.2], 5.5); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); }
-
-let allFamiliesData = [];
+function initMap(){ if(map){ map.invalidateSize(); return; } map = L.map('map').setView([15.9, 30.2], 5.5); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); }
 
 async function loadData(){
  try{
@@ -186,8 +245,23 @@ async function loadData(){
   document.getElementById('distributed').innerText=data.filter(f=>f.fingerprint_verified).length;
   document.getElementById('pending').innerText=data.filter(f=>!f.fingerprint_verified).length;
   
+  const isManager = currentUser && currentUser.type==='manager';
+  const isViewOnly = currentUser && currentUser.role==='view_only';
+  const isAddSearch = currentUser && currentUser.role==='add_search';
+
   document.getElementById('familyTable').innerHTML=data.map(f=>{
     const qrUrl=`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(f.id||f.name)}`;
+    // صلاحيات الأزرار: عرض فقط = لا أزرار، إضافة وبحث = لا تعديل ولا حذف ولا طباعة، مدير = كل شي
+    let actions = '';
+    if(isManager){
+      actions = `<button onclick="openPrintModal('${f.id}')" class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-[10px] font-bold">🖨️ طباعة</button>
+        <button onclick="openEditModal('${f.id}')" class="bg-amber-50 text-amber-600 px-2 py-1 rounded text-[10px] font-bold">✏️ تعديل</button>
+        <button onclick="deleteFamily('${f.id}')" class="bg-red-50 text-red-600 px-2 py-1 rounded text-[10px] font-bold">🗑️ حذف</button>`;
+    } else if(isAddSearch){
+      actions = `<span class="text-gray-400 text-[10px]">عرض فقط</span>`;
+    } else {
+      actions = `<span class="text-gray-400 text-[10px]">عرض فقط</span>`;
+    }
     return `<tr class="border-t hover:bg-gray-50">
       <td class="p-3"><div class="font-bold">${f.name}</div><div class="text-[10px] text-gray-500">${f.phone||''} - ${f.members||0} فرد</div></td>
       <td class="p-3">${f.state||f.district||'الخرطوم'}</td>
@@ -195,11 +269,7 @@ async function loadData(){
       <td class="p-3"><img src="${qrUrl}" class="w-12 h-12 border rounded" alt="QR"></td>
       <td class="p-3"><span class="px-2 py-1 rounded-full text-[10px] ${f.fingerprint_verified?'bg-green-100 text-green-700':'bg-gray-100 text-gray-500'}">${f.fingerprint_verified?'✅ مؤكدة':'⏳ لم تؤخذ'}</span></td>
       <td class="p-3"><span class="px-2 py-1 rounded-full text-[10px] ${f.status=='distributed'?'bg-green-100 text-green-700':'bg-orange-100 text-orange-600'}">${f.status=='distributed'?'تم':'انتظار'}</span></td>
-      <td class="p-3 text-center space-x-1 space-x-reverse">
-        <button onclick="openPrintModal('${f.id}')" class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-[10px] font-bold">🖨️ طباعة</button>
-        <button onclick="openEditModal('${f.id}')" class="bg-amber-50 text-amber-600 px-2 py-1 rounded text-[10px] font-bold">✏️ تعديل</button>
-        <button onclick="deleteFamily('${f.id}')" class="bg-red-50 text-red-600 px-2 py-1 rounded text-[10px] font-bold">🗑️ حذف</button>
-      </td>
+      <td class="p-3 text-center space-x-1 space-x-reverse">${actions}</td>
     </tr>`;
   }).join('');
 
@@ -208,7 +278,6 @@ async function loadData(){
  }catch(e){ console.log(e); }
 }
 
-// ✅ تعديل فقط: البحث يشمل التصنيف
 function filterTable(){ 
   const q=document.getElementById('search').value.toLowerCase(); 
   const cf=document.getElementById('classFilter').value;
@@ -221,7 +290,8 @@ function filterTable(){
 function filterByState(){ const s=document.getElementById('stateFilter').value; document.getElementById('search').value=s; filterTable(); }
 
 function openAddModal(){ 
-  document.getElementById('modalTitle').innerText = 'إضافة أسرة جديدة (صلاحية مدير)';
+  if(currentUser && currentUser.role==='view_only'){ alert('صلاحيتك عرض وبحث فقط، ما بتقدر تضيف'); return; }
+  document.getElementById('modalTitle').innerText = 'إضافة أسرة جديدة';
   document.getElementById('fId').value = '';
   document.getElementById('fName').value = '';
   document.getElementById('fPhone').value = '';
@@ -235,6 +305,7 @@ function openAddModal(){
 }
 
 function openEditModal(id){
+  if(currentUser && currentUser.type!=='manager'){ alert('التعديل للمدير فقط'); return; }
   const f = allFamiliesData.find(item => item.id == id);
   if(!f) return;
   document.getElementById('modalTitle').innerText = 'تعديل بيانات الأسرة';
@@ -252,7 +323,6 @@ function openEditModal(id){
 
 function closeAddModal(){ document.getElementById('addModal').classList.add('hidden'); }
 
-// ✅ إضافة فقط: دالة البصمة
 function captureFingerprint(){
   const b = document.getElementById('fingerBtn');
   b.innerText = '⏳ جاري التقاط البصمة...';
@@ -265,7 +335,14 @@ function captureFingerprint(){
   }, 800);
 }
 
+function isMissingColumnError(error){
+  if(!error) return false;
+  const msg = (error.message || '').toLowerCase();
+  return msg.includes('classification') || msg.includes('column') || msg.includes('does not exist') || error.code === 'PGRST204';
+}
+
 async function saveFamily(){
+ if(currentUser && currentUser.role==='view_only'){ alert('صلاحيتك عرض وبحث فقط'); return; }
  const id = document.getElementById('fId').value;
  const name = document.getElementById('fName').value; 
  const phone = document.getElementById('fPhone').value; 
@@ -273,28 +350,81 @@ async function saveFamily(){
  const members = document.getElementById('fMembers').value;
  const classification = document.getElementById('fClass').value;
  const fingerprint_verified = tempFingerprint;
- 
  if(!name) return alert('اكتب الاسم');
-
  if(id) {
-   const { error } = await supabaseClient.from('families').update({name, phone, state, members: parseInt(members)||1, classification, fingerprint_verified}).eq('id', id);
+   let { error } = await supabaseClient.from('families').update({name, phone, state, members: parseInt(members)||1, classification, fingerprint_verified}).eq('id', id);
+   if(error && isMissingColumnError(error)){
+     const retry = await supabaseClient.from('families').update({name, phone, state, members: parseInt(members)||1, fingerprint_verified}).eq('id', id);
+     error = retry.error;
+   }
    if(error) alert('خطأ في التعديل: '+error.message); 
    else { closeAddModal(); loadData(); alert('تم تعديل السجل بنجاح ✅'); }
  } else {
-   const { error } = await supabaseClient.from('families').insert([{name, phone, state, members: parseInt(members)||1, status:'pending', classification, fingerprint_verified}]);
+   let { error } = await supabaseClient.from('families').insert([{name, phone, state, members: parseInt(members)||1, status:'pending', classification, fingerprint_verified}]);
+   if(error && isMissingColumnError(error)){
+     const retry = await supabaseClient.from('families').insert([{name, phone, state, members: parseInt(members)||1, status:'pending', fingerprint_verified}]);
+     error = retry.error;
+   }
    if(error) alert('خطأ: '+error.message); 
    else { closeAddModal(); loadData(); alert('تمت الإضافة + توليد QR تلقائياً ✅'); }
  }
 }
 
 async function deleteFamily(id){
+  if(currentUser && currentUser.type!=='manager'){ alert('الحذف للمدير فقط'); return; }
   if(!confirm('هل أنت متأكد من حذف هذا السجل نهائياً؟')) return;
   const { error } = await supabaseClient.from('families').delete().eq('id', id);
   if(error) alert('خطأ في الحذف: '+error.message);
   else { loadData(); alert('تم حذف السجل بنجاح 🗑️'); }
 }
 
+// ✅ إدارة الأدمن - المدير فقط
+async function openAdminsModal(){
+  if(!currentUser || currentUser.type!=='manager'){ alert('هذه الصفحة للمدير فقط'); return; }
+  document.getElementById('adminsModal').classList.remove('hidden');
+  loadAdmins();
+}
+function closeAdminsModal(){ document.getElementById('adminsModal').classList.add('hidden'); }
+
+async function loadAdmins(){
+  const list = document.getElementById('adminsList');
+  const { data, error } = await supabaseClient.from('admins').select('*').order('created_at',{ascending:false});
+  if(error){ list.innerHTML = `<p class="text-red-500 text-xs text-center">خطأ: ${error.message}<br>تأكد إنك ضفت عمودي username و password</p>`; return; }
+  if(!data || !data.length){ list.innerHTML = `<p class="text-gray-400 text-center py-4 text-xs">لا يوجد أدمن بعد - أضف أول أدمن من الأعلى</p>`; return; }
+  list.innerHTML = data.map(a=>{
+    const label = a.role==='add_search' ? '➕ إضافة وبحث' : '👁️ عرض وبحث فقط';
+    const color = a.role==='add_search' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700';
+    return `<div class="border rounded-xl p-3 flex justify-between items-center">
+      <div><b>${a.name||'-'}</b> <span class="px-2 py-1 rounded-full text-[10px] ${color}">${label}</span><br><span class="text-gray-400 text-xs">👤 ${a.username||'-'} | 📞 ${a.phone||'-'}</span></div>
+      <button onclick="deleteAdmin('${a.id}')" class="bg-red-50 text-red-600 px-2 py-1 rounded text-[10px] font-bold">🗑️ حذف</button>
+    </div>`;
+  }).join('');
+}
+
+async function saveAdmin(){
+  const name = document.getElementById('aName').value.trim();
+  const phone = document.getElementById('aPhone').value.trim();
+  const username = document.getElementById('aUsername').value.trim();
+  const password = document.getElementById('aPassword').value.trim();
+  const role = document.getElementById('aRole').value;
+  if(!name || !username || !password) return alert('اكتب الاسم واسم المستخدم وكلمة السر');
+  const { error } = await supabaseClient.from('admins').insert([{name, phone, username, password, role}]);
+  if(error) alert('خطأ: '+error.message+'\nتأكد إنك ضفت عمودي username و password في جدول admins');
+  else {
+    ['aName','aPhone','aUsername','aPassword'].forEach(id=>document.getElementById(id).value='');
+    loadAdmins(); alert('تم إضافة الأدمن بنجاح ✅\nيقدر يدخل هسع من صفحة الدخول بـ: '+username+' / '+password);
+  }
+}
+
+async function deleteAdmin(id){
+  if(!confirm('متأكد تحذف الأدمن ده؟')) return;
+  const { error } = await supabaseClient.from('admins').delete().eq('id', id);
+  if(error) alert('خطأ: '+error.message);
+  else loadAdmins();
+}
+
 function openPrintModal(id){
+  if(currentUser && currentUser.type!=='manager'){ alert('الطباعة للمدير فقط'); return; }
   const f = allFamiliesData.find(item => item.id == id);
   if(!f) return;
   document.getElementById('cName').innerText = f.name || '-';
@@ -302,18 +432,15 @@ function openPrintModal(id){
   document.getElementById('cClass').innerText = f.classification || f.class || '-';
   document.getElementById('cPhone').innerText = f.phone || '-';
   document.getElementById('cMembers').innerText = (f.members || 1) + ' أفراد';
-  
   const qrUrl=`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(f.id||f.name)}`;
   document.getElementById('cardQRContainer').innerHTML = `<img src="${qrUrl}" class="w-24 h-24 border rounded mx-auto" alt="QR">`;
-  
   document.getElementById('printCardModal').classList.remove('hidden');
 }
 
 function closePrintModal(){ document.getElementById('printCardModal').classList.add('hidden'); }
-
 function exportExcel(){ alert('سيتم تصدير Excel بعد ربط Supabase - البيانات مرتبطة حالياً'); }
 
-window.onload=()=>{ if(localStorage.getItem('wusul_auth')){ initMap(); loadData(); } }
+window.onload=()=>{ if(localStorage.getItem('wusul_auth')){ applyPermissions(); initMap(); loadData(); } }
 </script>
 </body>
 </html>
